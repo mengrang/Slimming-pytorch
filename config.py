@@ -1,0 +1,12 @@
+BATCH_SIZE = 36
+INPUT_SIZE = (448, 448) 
+LR = 0.1 * BATCH_SIZE / 256
+WD = 1e-4
+SAVE_FREQ = 1
+resume = ''
+test_model = ''
+save_dir = 'E:\save\\Slimming-pytorch\\save_models'
+data_dir = 'E:\data\\fg_data\\bird_200'
+START_EPOCH = 0
+LAMBDA1 = 1e-4 
+THRESHOLD = 0.1

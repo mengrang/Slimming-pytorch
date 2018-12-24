@@ -1,0 +1,7 @@
+numpy
+scipy
+os
+sys
+random
+PIL
+math
