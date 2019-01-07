@@ -9,11 +9,12 @@ This project implementation of the channel pruning through BN networks slimming 
     |---dataset.py
 |---models
     |---model.py
+    |---new_resnet.py
     |---resnet_bn_slim.py
 |---config.py
 |---train.py
 |---utils.py
-|---pruned.py
+|---real_prune.py
 ```
 
 # Dataset
