@@ -30,10 +30,9 @@ species has only 30 images for training.
 
 # Usage
 
-pytorch 0.40
-python3.6
+requires python3.6,pytorch 0.40 
 ```
-pip install rrequirements.txt
+pip install -r requirements.txt
 ```
 
 # Reference
