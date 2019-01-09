@@ -34,10 +34,12 @@ requires python3.6, pytorch 0.40
 ```
 pip install -r requirements.txt
 ```
+
 # Usage
 ```
 python train.py
 ```
+
 # Reference
 
 - [Learning Efficient Convolutional Networks through Network Slimming](https://arxiv.org/abs/1708.06519)
