@@ -1,4 +1,4 @@
-# Slimming-pytorch（In progress）
+# Slimming-pytorch（Update in progress）
 This project implementation of the channel pruning through BN networks slimming in Pytorch.
 
 ![title](imags/slim.png)
