@@ -68,7 +68,7 @@ def slim_statistic(bn_w_dict, layers, ratio, model='ResNet50'):
     bnw_state = bn_state(bn_w_dict, ratio)
     if model == 'ResNet50':
         flat_net_C = [c for layer in ResNet50_C for block in layer for c in block]
-    flat_slim_C = [bn_channels(v, min(float(bnw_state[k][-1]), 0.05)) for k, v in bn_w_dict.items()]
+    flat_slim_C = [bn_channels(v, float(bnw_state[k][-1])) for k, v in bn_w_dict.items()]
     for p in zip(flat_slim_C, flat_net_C):
         C_slim_ratio.append(round(p[0]/p[1], 4))
     total_C_slim_ratio = sum(C_slim_ratio) / len(flat_net_C)
@@ -95,13 +95,13 @@ if __name__ == "__main__":
             [[256, 256]]*ResNet50_LAYERS[2], 
             [[512, 512]]*ResNet50_LAYERS[3]
             ]
-    ckpt = torch.load(osp.join("/home/zhangming/log/mr/train_slim/prune", "ckpt.pth"))
+    ckpt = torch.load(osp.join("/home/zhangming/log/mr/train_slim/slim_baseline_v4", "ckpt.pth"))
     ckpt_dict = ckpt['state_dicts'][0]
  
     bn_w_dict = bn_weights(ckpt_dict)
 
-    bnw_index, slim_bnw_dict = slim_bnws(bn_w_dict, 0.7)  
-    net_channels = slim_channels(bn_w_dict, ResNet50_LAYERS, 0.7, model='ResNet50')
+    bnw_index, slim_bnw_dict = slim_bnws(bn_w_dict, 0.8)  
+    net_channels = slim_channels(bn_w_dict, ResNet50_LAYERS, 0.8, model='ResNet50')
     print([
         [[64]], 
         [[64, 64]]*3, 
@@ -109,10 +109,10 @@ if __name__ == "__main__":
         [[256, 256]]*6, 
         [[512, 512]]*3])
     print(net_channels)
-    C_slim_ratio, total_C_slim_ratio = slim_statistic(bn_w_dict, ResNet50_LAYERS, 0.7, model='ResNet50')
+    C_slim_ratio, total_C_slim_ratio = slim_statistic(bn_w_dict, ResNet50_LAYERS, 0.8, model='ResNet50')
     print('Channels Slimming Ratio:\n{}'.format(C_slim_ratio))
     print('Total Channels Slimming Ratio:\n{:4f}'.format(total_C_slim_ratio))
-    bnw_state = bn_state(bn_w_dict, 0.7)
+    bnw_state = bn_state(bn_w_dict, 0.8)
     for k,v in bnw_state.items():
         print(k)
-        print(v[-1])
+        print(v)
