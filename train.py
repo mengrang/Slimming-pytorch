@@ -13,6 +13,7 @@ from utils import *
 import collections
 import shutil
 
+
 def main():
     start_epoch = 1
     saver_dir = mk_save(save_dir, cfg_dir)
@@ -66,18 +67,7 @@ def main():
         net.train()
         for i, data in enumerate(trainloader):
             # warm up Learning rate
-            if epoch <= 5:
-                lr = LR / (len(trainloader) * 5) * (i + len(trainloader) * epoch)
-            elif epoch > 5 and epoch <= 10:
-                lr = LR
-            elif epoch > 10 and epoch <= 50:
-                lr = LR /10
-            elif epoch > 50 and epoch <= 90:
-                lr = LR * 1e-2
-            elif epoch > 90 and epoch <= 130:
-                lr = LR * 1e-3
-            elif epoch > 130 and epoch <= 170:
-                lr = LR * 1e-3 - (LR*1e-3 - LR*1e-4) / 40.  * (epoch - 130.)
+            lr = warm_lr(i, epoch, trainloader)
 
             ########################
             # Define Optimizer #
@@ -110,29 +100,11 @@ def main():
             """
             # evaluate net on train set  
             """
-            train_loss = 0
-            train_correct = 0
-            total = 0
             net.eval()
-            for i, data in enumerate(trainloader):
-                with torch.no_grad():
-                    img, label = data[0].cuda(), data[1].cuda()
-                    batch_size = img.size(0)
-                    logits = net(img)
-                    # calculate loss
-                    train_loss = criterion(logits, label)
-                    # calculate accuracy
-                    _, predict = torch.max(logits, 1)
-                    total += batch_size
-                    train_correct += torch.sum(predict.data == label.data)
-                    train_loss += train_loss.item() * batch_size
-                    
-                    progress_bar(i, len(trainloader), train_loss / (i+1), msg='eval train set')
+            train_loss, train_correct, total = test(trainloader)
 
             train_acc = float(train_correct) / total
             train_loss = train_loss / total
-            train_distill_loss = train_distill_loss / total
-            train_at_loss = train_at_loss / total
             total_loss = total_loss / total
 
             _print(
@@ -147,23 +119,7 @@ def main():
             """
             # evaluate net on test set  
             """
-            test_loss = 0
-            test_correct = 0
-            total = 0
-            for i, data in enumerate(testloader):
-                with torch.no_grad():
-                    img, label = data[0].cuda(), data[1].cuda()
-                    batch_size = img.size(0)
-                    logits = net(img)
-                    
-                    # calculate loss
-                    test_loss = criterion(logits, label)
-                    # calculate accuracy
-                    _, predict = torch.max(logits, 1)
-                    total += batch_size
-                    test_correct += torch.sum(predict.data == label.data)
-                    test_loss += test_loss.item() * batch_size
-                    progress_bar(i, len(testloader), test_loss, msg='eval test set')
+            test_loss, test_correct, total = test(testloader)
 
             test_acc = float(test_correct) / total
             test_loss = test_loss / total
@@ -188,6 +144,46 @@ def main():
                 'state_dict': net_state_dict},
                 os.path.join(save_dir, '%03d.ckpt' % epoch))
     print('finishing training')
+
+def warm_lr(i, epoch, dataloader):
+        # warm up Learning rate
+    lr = 0
+    if epoch <= 5:
+        lr = LR / (len(dataloader) * 5) * (i + len(dataloader) * epoch)
+    elif epoch > 5 and epoch <= 10:
+        lr = LR
+    elif epoch > 10 and epoch <= 50:
+        lr = LR /10
+    elif epoch > 50 and epoch <= 90:
+        lr = LR * 1e-2
+    elif epoch > 90 and epoch <= 130:
+        lr = LR * 1e-3
+    elif epoch > 130 and epoch <= 170:
+        lr = LR * 1e-3 - (LR*1e-3 - LR*1e-4) / 40.  * (epoch - 130.)
+    else:
+        lr =lr   
+    return lr
+
+def test(dataloader):
+    loss = 0
+    correct = 0
+    total = 0
+    for i, data in enumerate(dataloader):
+        with torch.no_grad():
+            img, label = data[0].cuda(), data[1].cuda()
+            batch_size = img.size(0)
+            logits = net(img)
+            # calculate loss
+            loss = criterion(logits, label)
+            # calculate accuracy
+            _, predict = torch.max(logits, 1)
+            total += batch_size
+            correct += torch.sum(predict.data == label.data)
+            loss += loss.item() * batch_size
+            
+            progress_bar(i, len(dataloader), loss / (i+1), msg='eval train set')
+
+    return loss, correct, total
 
 if __name__ == '__main__':
   main()
