@@ -1,1 +1,5 @@
 __pycache__/config.cpython-36.pyc
+models/__pycache__/resnet_bn_slim.cpython-36.pyc
+models/__pycache__/model.cpython-36.pyc
+dataset/__pycache__/dataset.cpython-36.pyc
+__pycache__/utils.cpython-36.pyc
