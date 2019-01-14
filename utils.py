@@ -4,30 +4,93 @@ import os
 import sys
 import time
 import logging
+from datetime import datetime
 from functools import partial
 import torch
 import torch.nn.functional as F
+import collections
+import shutil
+from dataset import dataset
+from config import *
 
 term_width = 200
 TOTAL_BAR_LENGTH = 6.
 last_time = time.time()
 begin_time = last_time
 
-def at(x):   
-    return F.normalize(x.pow(2).mean(1).view(x.size(0), -1))
+#########################################
+#               Functions               #
+#########################################
 
-def at_loss(x, y):
-    if not at(x).size() == at(y).size():
-        print(at(y).size(), at(y).size())
-    # exit()
-    return ((at(x) - at(y)).pow(2)).mean()
+def mk_save(dir, cfg_dir):
+    make_dir = os.path.join(dir, datetime.now().strftime('%Y%m%d_%H%M%S'))
+    if os.path.exists(make_dir):
+        raise NameError('model dir exists!')
+        print(make_dir)
+    os.makedirs(make_dir)
+    print('----save_dir:',make_dir)
+    
+    cfg_file = os.path.join(cfg_dir, 'config.py')
+    shutil.copy(cfg_file, make_dir)
+    return make_dir
+
+def dataloader(data_dir, num_workers):
+    trainset = dataset.CUB(root=data_dir, is_train=True, data_len=None)
+    testset = dataset.CUB(root=data_dir, is_train=False, data_len=None)
+
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
+                                            shuffle=True, num_workers=0, drop_last=False)    
+    testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
+                                            shuffle=False, num_workers=0, drop_last=False)
+    return trainset, testset, trainloader, testloader
+
+def params_extract(model):
+    base_params = []
+    base_names = []
+    base_bias_params = []
+    base_bias_names = []
+    slim_params = []
+    slim_names = []
+    
+    for name, param in model.named_parameters():
+      if param.requires_grad:
+        if name.endswith('bias'):
+          base_bias_params.append(param)
+          base_bias_names.append(name)
+        elif name.endswith('weight'):
+          for j in name.split('.'):
+            if (j == 'bn1' or j == 'bn2'):
+              slim_params.append(param)
+              slim_names.append(name)
+
+    return slim_params
+
+def no_b_bn_resume(model, ckpt_dict):
+    net_dict = model.state_dict()    
+    bn_b_dict = dict()
+    for k, v in model.state_dict().items():
+        for i in k.split('.'):
+            if (i == 'bn1' or i == 'bn2' or i == 'bn3') and k.endswith('bias'):
+                bn_b_dict[k] = v
+    pre_dict = {k: v for k, v in ckpt_dict.items() if k in net_dict and k not in bn_b_dict}        
+    net_dict.update(pre_dict)
+    return net_dict
+
+
+
+def params_count(net):
+    n_parameters = sum(p.numel() for p in net.parameters())  
+    print('-----Model Size: {:.5f}M'.format(n_parameters/1e6))
+   
+def L1_penalty(var):
+    return torch.abs(var).sum()
 
 def print_tensor_dict(params):
     kmax = max(len(key) for key in params.keys())
     for i, (key, v) in enumerate(params.items()):
         print(str(i).ljust(5), key.ljust(kmax + 3), str(tuple(v.shape)).ljust(23), torch.typename(v), v.requires_grad)
 
-def multi_progress_bar(current, 
+def progress_bar(current, 
                 total, 
                 loss, 
                 l1=None, 
