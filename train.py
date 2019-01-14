@@ -7,7 +7,7 @@ import torch.nn.functional as F
 from torch.nn import DataParallel
 from datetime import datetime
 from config import *
-from models import *
+from models import model
 from dataset import dataset
 from utils import *
 import collections
@@ -24,12 +24,12 @@ _print = logging.info
 # read dataset
 trainset = dataset.CUB(root=data_dir, is_train=True, data_len=None)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=BATCH_SIZE,
-                                          shuffle=True, num_workers=2, drop_last=False)
+                                          shuffle=True, num_workers=0, drop_last=False)
 testset = dataset.CUB(root=data_dir, is_train=False, data_len=None)
 testloader = torch.utils.data.DataLoader(testset, batch_size=BATCH_SIZE,
-                                         shuffle=False, num_workers=2, drop_last=False)
+                                         shuffle=False, num_workers=0, drop_last=False)
 # define model
-net = model.student()
+net = model.model()
 
 if resume:
     ckpt = torch.load(resume)
@@ -97,7 +97,7 @@ for epoch in range(start_epoch, 500):
         optimizer.zero_grad()
         L1_norm = 0.
 
-        logits, fms, _,  _ = net(img)  
+        logits = net(img)  
         # L1 penaty
         L1_norm = sum([L1_penalty(m).cuda() for m in bn_w_params])
         loss = criterion(logits, label) + LAMBDA1 * L1_norm        

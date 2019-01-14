@@ -30,8 +30,8 @@ def print_tensor_dict(params):
 def multi_progress_bar(current, 
                 total, 
                 loss, 
-                L1=None, 
-                LR=None, 
+                l1=None, 
+                lr=None, 
                 msg=None):
     global last_time, begin_time
     if current == 0:
@@ -56,12 +56,12 @@ def multi_progress_bar(current,
     L = []
     L.append('  Step: %s' % format_time(step_time))
     L.append(' | Tot: %s' % format_time(tot_time))
-    L.append(' | loss: {:.4f}'.format(loss1))
+    L.append(' | loss: {:.4f}'.format(loss))
     if l1:
-        L.append(' | L1:{:.6f}'.format(arg6))
+        L.append(' | L1:{:.6f}'.format(l1))
     if lr:
-    L.append(' | lr:{:.6f}'.format(arg7))
-    L.append(' | ' + msg)
+        L.append(' | lr:{:.6f}'.format(lr))
+        L.append(' | ' + msg)
 
     msg = ''.join(L)
     sys.stdout.write(msg)

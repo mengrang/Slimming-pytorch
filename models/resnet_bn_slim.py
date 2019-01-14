@@ -151,12 +151,9 @@ class ResNet(nn.Module):
         x = self.conv1(x)
         x = self.bn1(x)
         x = self.relu(x)
-        co_layer = x
         x = self.maxpool(x)       
         x = self.layer1(x)
         x = self.layer2(x)    
-        im = self.gap(self.relu1(x)).view(x.size(0), -1)
-        im = self.fc1(im)
         x = self.layer3(x)
         x = self.layer4(x)
         x = self.avgpool(x)
